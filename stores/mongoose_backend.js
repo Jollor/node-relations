@@ -6,9 +6,18 @@
  */
 
 var store = module.exports = require('eventflow')();
-var RelationModel = require('./mongoose_model.js');
+var RelationModel;
 
 store.on('init', function (options, cb) {
+    var relationModelFactory = require('./mongoose_model.js');
+    if (options.mongoose) {
+      // if mongoose queries hang without response, provide
+      // mongoose object from parent module via options
+      RelationModel = relationModelFactory(options.mongoose)
+    } else {
+      RelationModel = relationModelFactory(require('mongoose'))
+    }
+
     cb();
 });
 
@@ -42,8 +51,8 @@ store.on('verb-question', function (cmd, cb) {
         subject: cmd.subject,
         role: { $in: cmd.ctx.verbs[cmd.verb] },
         $or: [{
-                object: cmd.object || "",
-            },
+            object: cmd.object || "",
+        },
             {
                 object: ''
             }]
